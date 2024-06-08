@@ -14,10 +14,82 @@ def test_one_element():
     assert expected_results == results
     
 def test_two_element():
-    expected_results : dict = {'B F': 4, 'B->A': 2, 'D->B': 2, 'D->F': 2, 'F->A': 2, 'A B': 3, 'A F': 3, 'D->A': 2}
+    expected_results : dict = {'B F': 4, 'B>A': 2, 'D>B': 2, 'D>F': 2, 'F>A': 2, 'A B': 3, 'A F': 3, 'D>A': 2}
 
     horiz_data = spade.load_spmf_data(test_file_path)
     vert_data = spade.hor_to_vert(horiz_data)
     results = spade.count_frequent_two_seq(vert_data, 2)
 
+    assert expected_results == results
+    
+def test_temporal_join_simple_ab(capsys):
+    expected_results : dict = {'A B': [spade.Event(0,0), spade.Event(1,0)]}
+    
+    A = spade.IdList('A', [spade.Event(0,0), spade.Event(1,0)])
+    B = spade.IdList('B', [spade.Event(0,0), spade.Event(1,0)])
+    
+    with capsys.disabled():
+        results = spade.temporal_id_join(B, A)
+    
+    assert expected_results == results
+    
+def test_temporal_join_simple_a_then_b():
+    expected_results : dict = {'A>B': [spade.Event(0,1), spade.Event(1,1)]}
+    
+    A = spade.IdList('A', [spade.Event(0,0), spade.Event(1,0)])
+    B = spade.IdList('B', [spade.Event(0,1), spade.Event(1,1)])
+    
+    results = spade.temporal_id_join(A, B)
+    
+    assert expected_results == results
+
+def test_temporal_join_simple_b_then_a():
+    expected_results : dict = {'B>A': [spade.Event(0,1), spade.Event(1,1)]}
+    
+    A = spade.IdList('A', [spade.Event(0,1), spade.Event(1,1)])
+    B = spade.IdList('B', [spade.Event(0,0), spade.Event(1,0)])
+    
+    results = spade.temporal_id_join(A, B)
+    
+    assert expected_results == results
+
+def test_temporal_join_simple_ab(capsys):
+    expected_results : dict = {'A B': [spade.Event(0,0), spade.Event(1,0)]}
+    
+    A = spade.IdList('A', [spade.Event(0,0), spade.Event(1,0)])
+    B = spade.IdList('B', [spade.Event(0,0), spade.Event(1,0)])
+    
+    with capsys.disabled():
+        results = spade.temporal_id_join(B, A)
+    
+    assert expected_results == results
+    
+def test_temporal_join_longer_1():
+    expected_results : dict = {'A B>B': [spade.Event(0,1), spade.Event(1,1)]}
+    
+    A = spade.IdList('A B', [spade.Event(0,0), spade.Event(1,0)])
+    B = spade.IdList('A>B', [spade.Event(0,1), spade.Event(1,1)])
+    
+    results = spade.temporal_id_join(A, B)
+    
+    assert expected_results == results
+
+def test_temporal_join_longer_2():
+    expected_results : dict = {'A B C>A B>A': [spade.Event(0,1), spade.Event(1,1)]}
+    
+    A = spade.IdList('A B C>A>A', [spade.Event(0,1), spade.Event(1,1)])
+    B = spade.IdList('A B C>A B', [spade.Event(0,0), spade.Event(1,0)])
+    
+    results = spade.temporal_id_join(A, B)
+    
+    assert expected_results == results
+
+def test_temporal_join_different_prefixes():
+    expected_results : dict = {}
+    
+    A = spade.IdList('A D C>G>A', [spade.Event(0,1), spade.Event(1,1)])
+    B = spade.IdList('A B C>A B', [spade.Event(0,0), spade.Event(1,0)])
+    
+    results = spade.temporal_id_join(A, B)
+    
     assert expected_results == results

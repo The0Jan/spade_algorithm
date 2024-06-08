@@ -88,9 +88,9 @@ def count_frequent_two_seq(id_lists : dict, min_sup : int):
             for index_j,event_j in enumerate(seq[index_i+1:]):
                         
                 if event_i[1] < event_j[1]:
-                    two_seq = event_i[0] + '->' + event_j[0]
+                    two_seq = event_i[0] + '>' + event_j[0]
                 elif event_i[1] > event_j[1]:
-                    two_seq = event_j[0] + '->' + event_i[0]
+                    two_seq = event_j[0] + '>' + event_i[0]
                 else:
                     two_seq = ' '.join(sorted([event_i[0], event_j[0]]))
 
@@ -103,47 +103,61 @@ def count_frequent_two_seq(id_lists : dict, min_sup : int):
 
     return frequent_two
     
-    
-    
-    
-        
-    
-def temporal_id_join(item_list_i : IdList, item_list_j : IdList):
+
+def temporal_id_join(item_list_i : IdList, item_list_j : IdList) -> dict[str, list[Event]]:
     '''
     Given two item id-lists, return a dictionary of new joined id-lists
     indexed by the new correspoding item sequences.
     '''
-    joined_lists : dict[str, list[Event[int, int]]] = {}
+    joined_lists : dict[str, list[Event]] = {}
+    ## Only joining for sequences with same prefix
+    if item_list_i.seq[:-2] != item_list_j.seq[:-2]:
+        return joined_lists
     
     for event_i in item_list_i.events:
         for event_j in item_list_j.events:
             if event_i.sid == event_j.sid:
                 
                 if event_i.eid > event_j.eid:
-                    sup_seq = item_list_i.seq + '->' + item_list_j.seq[-1]
+                    sup_seq = item_list_j.seq + '>' + item_list_i.seq[-1]
+                    if sup_seq not in joined_lists:
+                        joined_lists[sup_seq] = []
                     joined_lists[sup_seq].append(Event(event_i.sid, event_i.eid))
                 
                 elif event_i.eid < event_j.eid:
-                    sup_seq = item_list_j.seq + '->' + item_list_i.seq[-1]
+                    sup_seq = item_list_i.seq + '>' + item_list_j.seq[-1]
+                    if sup_seq not in joined_lists:
+                        joined_lists[sup_seq] = []
                     joined_lists[sup_seq].append(Event(event_i.sid, event_j.eid))
 
-                
-                elif item_list_i.seq[-1] == item_list_j.seq[-1]:
-                    parted_i = item_list_i.seq.rpartition('-')
-                    parted_j = item_list_j.seq.rpartition('-')
-                    # do pierwszej strzałki bierz dołącz posortuj i zwróć
-                    
-                    # oba weź złącz i przesortuj i ze strzalkami dodaj na koniec
-                    
-                    pass
-        
-    pass
+                elif item_list_i.seq[-1] != item_list_j.seq[-1]:
+                    sup_seq = item_list_i.seq[:-1] + ' '.join(sorted([item_list_i.seq[-1], item_list_j.seq[-1]]))
+                    if sup_seq not in joined_lists:
+                        joined_lists[sup_seq] = []
+                    joined_lists[sup_seq].append(Event(event_i.sid, event_j.eid))
+    return joined_lists
 
 def prune():
     pass
 
-def enumerate_frequent_seq():
-    pass
+def enumerate_frequent_seq(equiv_list : dict[str, list[Event]], min_sup):
+    frequent_rest : dict[str, int] = {}
+    
+    for index_i, seq_i in enumerate(equiv_list.keys()):
+        
+        frequent_elements_inner : dict[str, list[Event]] = {}
+        for _, seq_j in enumerate(list(equiv_list.keys())[index_i + 1:]):
+        
+            R = temporal_id_join(IdList(seq_i, equiv_list[seq_i]), IdList(seq_j, equiv_list[seq_j]))
+            for seq, id_list in R.items():
+                support = len(set([event.sid for event in id_list]))
+                if support >= min_sup:
+                    frequent_elements_inner[seq] = id_list
+                    frequent_rest[seq] = support
+
+        rest = enumerate_frequent_seq(frequent_elements_inner, min_sup)
+        frequent_rest.update(rest)
+    return frequent_rest
 
 def spade_sequencing(data, min_sup):
     """
@@ -155,17 +169,23 @@ def spade_sequencing(data, min_sup):
     """
     print(data)
     # Find frequent 1 element 
-    freq_one = count_frequent_one_seq(data, min_sup)
-    print(freq_one)
+    freq_all = count_frequent_one_seq(data, min_sup)
+    print(freq_all)
 
     # Find frequent 2 element
     freq_two = count_frequent_two_seq(data, min_sup)
     print(freq_two)
     
-    # Equivalence class
-    # Dla wszystkich 2 elementowych sekwencji
-    # złącz listy id
-    # i to podaj do magii jako np. 'D->F': lista [sid:eid]
-    # Magic
+    # Get the Equivalence classes needed for the next step
+    equivalence_classes : dict[str, list[Event]] = {}
+    for two_seq in freq_two.keys():
+        R = temporal_id_join(IdList(two_seq[0], data[two_seq[0]]), IdList(two_seq[-1], data[two_seq[-1]]))
+        for sequence, id_list in R.items():
+            if sequence in freq_two:
+                equivalence_classes[sequence] = id_list
+
+    freq_rest = enumerate_frequent_seq(equivalence_classes, min_sup)
     
-    return
+    freq_all.update(freq_two)
+    freq_all.update(freq_rest)
+    return freq_all
