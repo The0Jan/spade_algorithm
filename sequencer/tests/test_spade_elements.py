@@ -93,3 +93,17 @@ def test_temporal_join_different_prefixes():
     results = spade.temporal_id_join(A, B)
     
     assert expected_results == results
+    
+def test_spade_sequencing():
+    expected_results : dict = {'D': 2, 'A': 4, 'B': 4, 
+                               'F': 4, 'D>B': 2, 'B F': 4, 
+                               'A F': 3, 'A B': 3, 'B>A': 2, 
+                               'D>F': 2, 'D>A': 2, 'F>A': 2, 
+                               'D>B F': 2, 'D>B>A': 2, 'D>B F>A': 2, 
+                               'B F>A': 2, 'A B F': 3, 'D>F>A': 2}
+    
+    horiz_data = spade.load_spmf_data(test_file_path)
+    vert_data = spade.hor_to_vert(horiz_data)
+    results = spade.spade_sequencing(vert_data, 2)
+
+    assert expected_results == results

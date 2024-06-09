@@ -1,4 +1,4 @@
-from collections import namedtuple, defaultdict
+from collections import namedtuple, defaultdict, OrderedDict
 
 #ToDo
 # Create convert
@@ -95,7 +95,7 @@ def count_frequent_two_seq(id_lists : dict, min_sup : int):
                     two_seq = ' '.join(sorted([event_i[0], event_j[0]]))
 
                 new_encountered.append(two_seq)
-        unique_new_encountered = set(new_encountered)
+        unique_new_encountered = sorted(set(new_encountered))
         for two_seq in unique_new_encountered:
             frequent_two[two_seq] += 1 
     
@@ -143,6 +143,7 @@ def prune():
 def enumerate_frequent_seq(equiv_list : dict[str, list[Event]], min_sup):
     frequent_rest : dict[str, int] = {}
     
+    frequent_elements_all : dict[str, list[Event]] = {}
     for index_i, seq_i in enumerate(equiv_list.keys()):
         
         frequent_elements_inner : dict[str, list[Event]] = {}
@@ -155,7 +156,9 @@ def enumerate_frequent_seq(equiv_list : dict[str, list[Event]], min_sup):
                     frequent_elements_inner[seq] = id_list
                     frequent_rest[seq] = support
 
-        rest = enumerate_frequent_seq(frequent_elements_inner, min_sup)
+        frequent_elements_all.update(frequent_elements_inner)
+    if bool(frequent_elements_all):
+        rest = enumerate_frequent_seq(frequent_elements_all, min_sup)
         frequent_rest.update(rest)
     return frequent_rest
 
