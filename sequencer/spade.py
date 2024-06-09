@@ -1,10 +1,5 @@
 from collections import namedtuple, defaultdict, OrderedDict
-
-#ToDo
-# Create convert
-# Test convert
 Event = namedtuple('Event', ['sid', 'eid'])
-
 
 class IdList:
     def __init__(self, seq:str, events: list[Event]):
@@ -14,8 +9,6 @@ class IdList:
     def __str__(self):
         return f"{self.seq} : {self.events}" 
         
-
-
 def load_spmf_data(file_path: str) -> list[list[str]]:
     horizontal_data : list[list[str]] = []
     with open(file_path) as data:
@@ -82,10 +75,10 @@ def count_frequent_two_seq(id_lists : dict, min_sup : int):
     # create counts using horizontal_db
     frequent_two = defaultdict(int)
     
-    for sid,seq in horizontal_format.items():
+    for _,seq in horizontal_format.items():
         new_encountered = []
         for index_i,event_i in enumerate(seq):
-            for index_j,event_j in enumerate(seq[index_i+1:]):
+            for _,event_j in enumerate(seq[index_i+1:]):
                         
                 if event_i[1] < event_j[1]:
                     two_seq = event_i[0] + '>' + event_j[0]
@@ -117,19 +110,16 @@ def temporal_id_join(item_list_i : IdList, item_list_j : IdList) -> dict[str, li
     for event_i in item_list_i.events:
         for event_j in item_list_j.events:
             if event_i.sid == event_j.sid:
-                
                 if event_i.eid > event_j.eid:
                     sup_seq = item_list_j.seq + '>' + item_list_i.seq[-1]
                     if sup_seq not in joined_lists:
                         joined_lists[sup_seq] = []
                     joined_lists[sup_seq].append(Event(event_i.sid, event_i.eid))
-                
                 elif event_i.eid < event_j.eid:
                     sup_seq = item_list_i.seq + '>' + item_list_j.seq[-1]
                     if sup_seq not in joined_lists:
                         joined_lists[sup_seq] = []
                     joined_lists[sup_seq].append(Event(event_i.sid, event_j.eid))
-
                 elif item_list_i.seq[-1] != item_list_j.seq[-1]:
                     sup_seq = item_list_i.seq[:-1] + ' '.join(sorted([item_list_i.seq[-1], item_list_j.seq[-1]]))
                     if sup_seq not in joined_lists:
@@ -137,13 +127,10 @@ def temporal_id_join(item_list_i : IdList, item_list_j : IdList) -> dict[str, li
                     joined_lists[sup_seq].append(Event(event_i.sid, event_j.eid))
     return joined_lists
 
-def prune():
-    pass
-
 def enumerate_frequent_seq(equiv_list : dict[str, list[Event]], min_sup):
     frequent_rest : dict[str, int] = {}
-    
     frequent_elements_all : dict[str, list[Event]] = {}
+
     for index_i, seq_i in enumerate(equiv_list.keys()):
         
         frequent_elements_inner : dict[str, list[Event]] = {}
@@ -155,7 +142,7 @@ def enumerate_frequent_seq(equiv_list : dict[str, list[Event]], min_sup):
                 if support >= min_sup:
                     frequent_elements_inner[seq] = id_list
                     frequent_rest[seq] = support
-
+                    
         frequent_elements_all.update(frequent_elements_inner)
     if bool(frequent_elements_all):
         rest = enumerate_frequent_seq(frequent_elements_all, min_sup)
@@ -170,14 +157,11 @@ def spade_sequencing(data, min_sup):
         data (_type_): _description_
         min_sup (_type_): _description_
     """
-    print(data)
     # Find frequent 1 element 
     freq_all = count_frequent_one_seq(data, min_sup)
-    print(freq_all)
 
     # Find frequent 2 element
     freq_two = count_frequent_two_seq(data, min_sup)
-    print(freq_two)
     
     # Get the Equivalence classes needed for the next step
     equivalence_classes : dict[str, list[Event]] = {}
@@ -192,3 +176,9 @@ def spade_sequencing(data, min_sup):
     freq_all.update(freq_two)
     freq_all.update(freq_rest)
     return freq_all
+
+def save_to_file(results: dict, file_path):
+    with open(file_path, "w") as results_file:
+        for key, value in results.items():
+            results_file.write(f"{key} : {value} \n")
+            
