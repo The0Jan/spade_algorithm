@@ -1,4 +1,5 @@
-from collections import namedtuple, defaultdict, OrderedDict
+from collections import namedtuple, defaultdict
+import re
 Event = namedtuple('Event', ['sid', 'eid'])
 
 class IdList:
@@ -104,24 +105,32 @@ def temporal_id_join(item_list_i : IdList, item_list_j : IdList) -> dict[str, li
     '''
     joined_lists : dict[str, list[Event]] = {}
     ## Only joining for sequences with same prefix
-    if item_list_i.seq[:-2] != item_list_j.seq[:-2]:
+    separate_i = separate_prefix(item_list_i.seq) 
+    separate_j = separate_prefix(item_list_j.seq)
+    if separate_i[0] != separate_j[0]:
         return joined_lists
-    
+
     for event_i in item_list_i.events:
         for event_j in item_list_j.events:
             if event_i.sid == event_j.sid:
+                
                 if event_i.eid > event_j.eid:
-                    sup_seq = item_list_j.seq + '>' + item_list_i.seq[-1]
+                    sup_seq = item_list_j.seq + '>' + separate_i[1]
                     if sup_seq not in joined_lists:
                         joined_lists[sup_seq] = []
                     joined_lists[sup_seq].append(Event(event_i.sid, event_i.eid))
+
                 elif event_i.eid < event_j.eid:
-                    sup_seq = item_list_i.seq + '>' + item_list_j.seq[-1]
+                    sup_seq = item_list_i.seq + '>' + separate_j[1]
                     if sup_seq not in joined_lists:
                         joined_lists[sup_seq] = []
                     joined_lists[sup_seq].append(Event(event_i.sid, event_j.eid))
-                elif item_list_i.seq[-1] != item_list_j.seq[-1]:
-                    sup_seq = item_list_i.seq[:-1] + ' '.join(sorted([item_list_i.seq[-1], item_list_j.seq[-1]]))
+
+                elif separate_i[1] != separate_j[1]:
+                    if separate_i[1] < separate_j[1]:
+                        sup_seq = item_list_i.seq + ' ' + separate_j[1]
+                    else:
+                        sup_seq = item_list_j.seq + ' ' + separate_i[1]
                     if sup_seq not in joined_lists:
                         joined_lists[sup_seq] = []
                     joined_lists[sup_seq].append(Event(event_i.sid, event_j.eid))
@@ -135,7 +144,6 @@ def enumerate_frequent_seq(equiv_list : dict[str, list[Event]], min_sup):
         
         frequent_elements_inner : dict[str, list[Event]] = {}
         for _, seq_j in enumerate(list(equiv_list.keys())[index_i + 1:]):
-        
             R = temporal_id_join(IdList(seq_i, equiv_list[seq_i]), IdList(seq_j, equiv_list[seq_j]))
             for seq, id_list in R.items():
                 support = len(set([event.sid for event in id_list]))
@@ -166,7 +174,8 @@ def spade_sequencing(data, min_sup):
     # Get the Equivalence classes needed for the next step
     equivalence_classes : dict[str, list[Event]] = {}
     for two_seq in freq_two.keys():
-        R = temporal_id_join(IdList(two_seq[0], data[two_seq[0]]), IdList(two_seq[-1], data[two_seq[-1]]))
+        items = separate_prefix(two_seq)
+        R = temporal_id_join(IdList(items[0], data[items[0]]), IdList(items[1], data[items[1]]))
         for sequence, id_list in R.items():
             if sequence in freq_two:
                 equivalence_classes[sequence] = id_list
@@ -181,4 +190,11 @@ def save_to_file(results: dict, file_path):
     with open(file_path, "w") as results_file:
         for key, value in results.items():
             results_file.write(f"{key} : {value} \n")
+            
+def separate_prefix(sequence : str):
+    split_pos = max(sequence.rfind(' '), sequence.rfind('>'))
+    if split_pos == -1:
+        return ["", sequence]  # No space or '>' found, entire string is the last word
+    else:
+        return [sequence[:split_pos], sequence[split_pos+1:]]
             

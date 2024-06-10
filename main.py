@@ -25,3 +25,6 @@ def main(args):
 if __name__ == "__main__":
     args = return_parsed_args()
     main(args)
+    
+# na joinach się jebie i nie działa
+# bo zrobiłeś jełopie by działało dla jedno elementowych itemów
