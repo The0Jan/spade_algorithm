@@ -1,5 +1,5 @@
 import argparse
-import timeit
+import time
 from sequencer import spade
 
 def return_parsed_args():
@@ -13,15 +13,13 @@ def return_parsed_args():
 def main(args):
     print(f"Dataset:{args.data}")
     horiz_data = spade.load_spmf_data(args.data)
-    print("Dataset loaded.")
     vert_data = spade.hor_to_vert(horiz_data)
-    print("Changed to vertical.")
 
-    start = timeit.timeit()
+    start = time.time()
     final = spade.spade_sequencing(vert_data, args.min_sup)
-    end = timeit.timeit()
+    end = time.time()
     
-    print(f"Elapsed time:{start - end}")
+    print(f"Elapsed time:{round(end - start, 3)} seconds.")
     spade.save_to_file(final, args.save)
 
 

@@ -164,15 +164,11 @@ def spade_sequencing(data, min_sup):
         min_sup (_type_): _description_
     """
     # Find frequent 1 element 
-    print("Frequent one.")
     freq_all = count_frequent_one_seq(data, min_sup)
-
     # Find frequent 2 element
-    print("Frequent two.")
     freq_two = count_frequent_two_seq(data, min_sup)
-    
+
     # Get the Equivalence classes needed for the next step
-    print("Equivalence classes.")
     equivalence_classes : dict[str, list[Event]] = {}
     for two_seq in freq_two.keys():
         items = separate_prefix(two_seq)
@@ -180,11 +176,9 @@ def spade_sequencing(data, min_sup):
         for sequence, id_list in R.items():
             if sequence in freq_two:
                 equivalence_classes[sequence] = id_list
-
-    print("Enumerate frequent seq.")
-    freq_rest = enumerate_frequent_seq(equivalence_classes, min_sup)
-    
     freq_all.update(freq_two)
+
+    freq_rest = enumerate_frequent_seq(equivalence_classes, min_sup)
     freq_all.update(freq_rest)
     return freq_all
 
