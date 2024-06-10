@@ -113,7 +113,6 @@ def temporal_id_join(item_list_i : IdList, item_list_j : IdList) -> dict[str, li
     for event_i in item_list_i.events:
         for event_j in item_list_j.events:
             if event_i.sid == event_j.sid:
-                
                 if event_i.eid > event_j.eid:
                     sup_seq = item_list_j.seq + '>' + separate_i[1]
                     if sup_seq not in joined_lists:
@@ -141,7 +140,6 @@ def enumerate_frequent_seq(equiv_list : dict[str, list[Event]], min_sup):
     frequent_elements_all : dict[str, list[Event]] = {}
 
     for index_i, seq_i in enumerate(equiv_list.keys()):
-        
         frequent_elements_inner : dict[str, list[Event]] = {}
         for _, seq_j in enumerate(list(equiv_list.keys())[index_i + 1:]):
             R = temporal_id_join(IdList(seq_i, equiv_list[seq_i]), IdList(seq_j, equiv_list[seq_j]))
@@ -166,12 +164,15 @@ def spade_sequencing(data, min_sup):
         min_sup (_type_): _description_
     """
     # Find frequent 1 element 
+    print("Frequent one.")
     freq_all = count_frequent_one_seq(data, min_sup)
 
     # Find frequent 2 element
+    print("Frequent two.")
     freq_two = count_frequent_two_seq(data, min_sup)
     
     # Get the Equivalence classes needed for the next step
+    print("Equivalence classes.")
     equivalence_classes : dict[str, list[Event]] = {}
     for two_seq in freq_two.keys():
         items = separate_prefix(two_seq)
@@ -180,6 +181,7 @@ def spade_sequencing(data, min_sup):
             if sequence in freq_two:
                 equivalence_classes[sequence] = id_list
 
+    print("Enumerate frequent seq.")
     freq_rest = enumerate_frequent_seq(equivalence_classes, min_sup)
     
     freq_all.update(freq_two)
@@ -194,7 +196,7 @@ def save_to_file(results: dict, file_path):
 def separate_prefix(sequence : str):
     split_pos = max(sequence.rfind(' '), sequence.rfind('>'))
     if split_pos == -1:
-        return ["", sequence]  # No space or '>' found, entire string is the last word
+        return ["", sequence]
     else:
         return [sequence[:split_pos], sequence[split_pos+1:]]
             
