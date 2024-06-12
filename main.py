@@ -11,7 +11,7 @@ def return_parsed_args():
     return args
 
 def main(args):
-    print(f"Dataset:{args.data}")
+    print(f"Dataset:{args.data} |Minimal support:{args.min_sup}")
     horiz_data = spade.load_spmf_data(args.data)
     vert_data = spade.hor_to_vert(horiz_data)
 

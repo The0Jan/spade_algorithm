@@ -1,5 +1,4 @@
 from collections import namedtuple, defaultdict
-import re
 Event = namedtuple('Event', ['sid', 'eid'])
 
 class IdList:
@@ -23,11 +22,6 @@ def load_spmf_data(file_path: str) -> list[list[str]]:
 def hor_to_vert(hor_data):
     """
     Convert the data from the horizontal format to a vertical one
-
-    Args:
-        data (_type_): _description_
-    Returns:
-        dict(element, list[tuple(sid, eid)])
     """
     vertical_data : dict[str, list[Event[int, int]]] = {}
     for sid, sequence in enumerate(hor_data):
@@ -42,10 +36,6 @@ def hor_to_vert(hor_data):
 def count_frequent_one_seq(id_lists : dict, min_sup : int):
     """
     Identify one element frequent sequences
-
-    Args:
-        id_list (_type_): _description_
-        min_sup (_type_): _description_
     """
     frequent_one : dict[str, int] = {}
     for item, entries in id_lists.items():
@@ -57,10 +47,6 @@ def count_frequent_one_seq(id_lists : dict, min_sup : int):
 def count_frequent_two_seq(id_lists : dict, min_sup : int):
     """
     Identify two element frequent sequences
-
-    Args:
-        elements (_type_): _description_
-        min_sup (_type_): _description_
     """
     # Vertical to horizontal on the fly conversion
     horizontal_format = {}
@@ -71,11 +57,9 @@ def count_frequent_two_seq(id_lists : dict, min_sup : int):
                 horizontal_format[event.sid] = [(item, event.eid)]
             else:
                 horizontal_format[event.sid].append((item, event.eid))
-        
-    
+
     # create counts using horizontal_db
     frequent_two = defaultdict(int)
-    
     for _,seq in horizontal_format.items():
         new_encountered = []
         for index_i,event_i in enumerate(seq):
@@ -158,10 +142,6 @@ def enumerate_frequent_seq(equiv_list : dict[str, list[Event]], min_sup):
 def spade_sequencing(data, min_sup):
     """
     Perform the spade sequencing algorithm on a dataset
-
-    Args:
-        data (_type_): _description_
-        min_sup (_type_): _description_
     """
     # Find frequent 1 element 
     freq_all = count_frequent_one_seq(data, min_sup)
@@ -193,4 +173,3 @@ def separate_prefix(sequence : str):
         return ["", sequence]
     else:
         return [sequence[:split_pos], sequence[split_pos+1:]]
-            
